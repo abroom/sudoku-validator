@@ -12,10 +12,10 @@ namespace AlexBroom.SudokuValidator
                 return 1;
             }
 
-            int[,] grid;
+            Validator validator;
             try
             {
-                grid = GridLoader.FromFile(args[0]);
+                validator = new Validator(args[0]);
             }
             catch (FormatException)
             {
@@ -27,7 +27,15 @@ namespace AlexBroom.SudokuValidator
                 return 2;
             }
 
-            Console.WriteLine("Hello World!");
+            bool isValid = validator.Validate();
+            if (isValid)
+            {
+                Console.WriteLine("Yes, valid");
+            }
+            else
+            {
+                Console.WriteLine("No, invalid");
+            }
 
             return 0;
         }
