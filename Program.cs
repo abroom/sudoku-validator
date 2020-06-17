@@ -8,7 +8,7 @@ namespace AlexBroom.SudokuValidator
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Missing input filename. Usage: validateSudoku <fileName>");
+                Console.WriteLine("Missing input filename. Usage: sudoku-validator <fileName>");
                 return 1;
             }
 
