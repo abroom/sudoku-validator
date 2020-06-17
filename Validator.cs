@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace AlexBroom.SudokuValidator
 {
@@ -41,54 +43,84 @@ namespace AlexBroom.SudokuValidator
 
         public bool Validate()
         {
+            List<Task<bool>> validations = new List<Task<bool>>();
+            
             for (int i = 0; i < SUDOKU_SIZE; i++)
             {
-                if (!ValidateRow(i) || !ValidateCol(i) || !ValidateSubGrid(i))
+                validations.Add(ValidateRowAsync(i));
+                validations.Add(ValidateColAsync(i));
+                validations.Add(ValidateSubGridAsync(i));
+            }
+
+            Task.WaitAll(validations.ToArray());
+
+            foreach (Task<bool> validation in validations)
+            {
+                if (!validation.Result)
                 {
                     return false;
                 }
             }
+
             return true;
         }
 
         // Helpers
-        private bool ValidateRow(int rowIndex)
+        private async Task<bool> ValidateRowAsync(int rowIndex)
         {
-            int[] row = new int[SUDOKU_SIZE];
-            for (int i = 0; i < SUDOKU_SIZE; i++)
-            {
-                row[i] = grid[rowIndex, i];
-            }
-            return ValidateAllDidgits(row);
-        }
-
-        private bool ValidateCol(int colIndex)
-        {
-            int[] col = new int[SUDOKU_SIZE];
-            for (int i = 0; i < SUDOKU_SIZE; i++)
-            {
-                col[i] = grid[i, colIndex];
-            }
-            return ValidateAllDidgits(col);
-        }
-
-        private bool ValidateSubGrid(int subGridIndex)
-        {
-            int[] subGrid = new int[SUDOKU_SIZE];
-
-            int rowIndex = subGridIndex / 3 * 3;
-            int colIndex = subGridIndex % 3 * 3;
-            
-            int index = 0;
-            for (int i = rowIndex; i < rowIndex + 3; i++)
-            {
-                for (int j = colIndex; j < colIndex + 3; j++)
+            Task<bool> task = new Task<bool>(() => {
+                int[] row = new int[SUDOKU_SIZE];
+                for (int i = 0; i < SUDOKU_SIZE; i++)
                 {
-                    subGrid[index++] = grid[i, j];
+                    row[i] = grid[rowIndex, i];
                 }
-            }
+                return ValidateAllDidgits(row);
+            });
 
-            return ValidateAllDidgits(subGrid);
+            task.Start();
+            await task;
+            return task.Result;
+        }
+
+        private async Task<bool> ValidateColAsync(int colIndex)
+        {
+            Task<bool> task = new Task<bool>(() => {
+                int[] col = new int[SUDOKU_SIZE];
+                for (int i = 0; i < SUDOKU_SIZE; i++)
+                {
+                    col[i] = grid[i, colIndex];
+                }
+                return ValidateAllDidgits(col);
+            });
+
+            task.Start();
+            await task;
+            return task.Result;
+        }
+
+        private async Task<bool> ValidateSubGridAsync(int subGridIndex)
+        {
+            Task<bool> task = new Task<bool>(() => {
+                int[] subGrid = new int[SUDOKU_SIZE];
+
+                int rowIndex = subGridIndex / 3 * 3;
+                int colIndex = subGridIndex % 3 * 3;
+                
+                int index = 0;
+                for (int i = rowIndex; i < rowIndex + 3; i++)
+                {
+                    for (int j = colIndex; j < colIndex + 3; j++)
+                    {
+                        subGrid[index++] = grid[i, j];
+                    }
+                }
+
+                return ValidateAllDidgits(subGrid);
+            });
+
+            task.Start();
+            await task;
+            return task.Result;
         }
 
         private bool ValidateAllDidgits(int[] didgits)
